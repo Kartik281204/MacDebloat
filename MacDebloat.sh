@@ -28,7 +28,11 @@
 #     NOT `curl ... | bash` — piping breaks the interactive menu because bash
 #     ends up reading the menu prompts from the same pipe as the script text.
 #
-set -u
+# Deliberately NOT using `set -u` here: macOS's stock /bin/bash is 3.2, where
+# "${arr[@]}" on a genuinely-empty array (e.g. no flags matched, or no
+# removable apps found) is treated as an unbound variable and kills the
+# script. This script instead guards optional values explicitly with
+# ${VAR:-...} wherever one might be unset.
 
 SCRIPT_VERSION="1.0.0"
 BACKUP_DIR="$HOME/.macdebloat_backup"
