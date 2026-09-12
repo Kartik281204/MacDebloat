@@ -2,6 +2,8 @@
 
 MacDebloat is a lightweight shell script that declutters and customizes macOS — no installation required. It's a macOS-flavored take on [Win11Debloat](https://github.com/Raphire/Win11Debloat): same idea (a menu-driven script that turns off telemetry, strips a handful of bundled apps, and tidies up the UI), rebuilt from scratch for a completely different OS.
 
+![MacDebloat Menu](/Assets/Images/menu.png)
+
 > [!Warning]
 > This changes system settings on your Mac. Every change is logged so it can be undone with `--revert`, but as with the project this is based on: use at your own risk, and consider a Time Machine backup first if you're running everything at once.
 
