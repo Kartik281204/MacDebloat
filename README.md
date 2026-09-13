@@ -1,104 +1,90 @@
-# MacDebloat
+# deblaot
 
-MacDebloat is a lightweight shell script that declutters and customizes macOS — no installation required. It's a macOS-flavored take on [Win11Debloat](https://github.com/Raphire/Win11Debloat): same idea (a menu-driven script that turns off telemetry, strips a handful of bundled apps, and tidies up the UI), rebuilt from scratch for a completely different OS.
+`deblaot` is the backend engine behind MacDebloat: a small local REST API that wraps the same catalog of macOS tweaks as `MacDebloat.sh`, so any future frontend — a native macOS app, a menu-bar app, a web dashboard — can drive them over HTTP instead of shelling out to the bash script directly.
 
-![MacDebloat Menu](/Assets/Images/menu.png)
+It is not a replacement for `MacDebloat.sh`. Think of the bash script as the reference implementation (it's what the exact `defaults` domains/keys/values here are ported from) and this as a second way to drive the same underlying tweaks, one built for a UI to sit in front of rather than a terminal menu.
 
 > [!Warning]
-> This changes system settings on your Mac. Every change is logged so it can be undone with `--revert`, but as with the project this is based on: use at your own risk, and consider a Time Machine backup first if you're running everything at once.
-
-## Usage
-
-### Quick method
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/<your-username>/<your-repo>/main/MacDebloat.sh)"
-```
-
-Replace `<your-username>/<your-repo>` once this is pushed to your own repo. Use `bash -c "$(curl ...)"`, **not** `curl ... | bash` — piping the script into bash consumes the same input stream the interactive menu needs to read your choices from, so the menu breaks. `bash -c` downloads the script into a string first and leaves your terminal's input alone.
-
-### Traditional method
-
-1. Download `MacDebloat.sh` (or `git clone` this repo).
-2. Open Terminal and `cd` into the folder.
-3. Run:
-   ```bash
-   bash MacDebloat.sh
-   ```
-4. Follow the on-screen menu.
-
-### Command-line flags
-
-For scripting or repeat use, skip the menu entirely:
-
-```bash
-bash MacDebloat.sh --help              # see all flags
-bash MacDebloat.sh --list              # see every tweak without running anything
-bash MacDebloat.sh --dry-run --all     # preview everything with no changes made
-bash MacDebloat.sh --disable-analytics --disable-ads --show-hidden-files
-bash MacDebloat.sh --revert            # undo the most recent run
-bash MacDebloat.sh --user jane --dock-autohide   # apply a per-user tweak to another account
-```
-
-## Features
-
-| Category | What it does |
-|---|---|
-| **Privacy & Analytics** | Turn off Mac analytics/crash-report sharing, personalized Apple advertising, Siri data sharing, Siri Suggestions in Spotlight, and Trash's 30-day auto-delete. |
-| **Siri & Apple Intelligence** | Disable Siri outright, or (experimentally) Apple Intelligence itself. |
-| **System, Power & Input** | Kill mouse acceleration, disable Power Nap and Wake-for-network during sleep, swap the accent-character popup for plain key repeat. |
-| **Software Update** | Stop background update *checking* and *downloading* nagging — critical security patches are deliberately left alone (see below). |
-| **Appearance** | Dark Mode, reduced transparency, reduced motion, battery percentage in the menu bar. |
-| **Dock & Menu Bar** | Auto-hide, hide recents, minimize-to-icon, reposition, reset Launchpad's layout. |
-| **Finder & Windows** | Show all extensions and hidden files, full path in the title bar, path/status bars, default window location, list view by default. |
-| **Remove Bundled Apps** | Pages, Numbers, Keynote, iMovie, GarageBand — see below for why only these five. |
-
-Run `bash MacDebloat.sh --list` for the exact, current list at any time.
-
-## Why this isn't a 1:1 port
-
-Windows and macOS simply don't expose the same knobs, so a few Win11Debloat features have no macOS equivalent and are intentionally left out rather than faked:
-
-- **BitLocker auto-encryption** — macOS doesn't silently auto-enable FileVault the way Windows can auto-enable Device Encryption, so there's nothing to turn off.
-- **Fast Startup** — macOS has no hybrid shutdown/hibernation mode to disable.
-- **Delivery Optimization** (P2P update sharing) and **auto-installing companion apps** — no macOS analog.
-- **Xbox Game Bar** — no macOS analog.
-
-And a couple of things are handled more conservatively than you might expect, on purpose:
-
-- **App removal is limited to Pages, Numbers, Keynote, iMovie, and GarageBand.** Every other bundled Apple app (Safari, Mail, Photos, Notes, etc.) lives on the cryptographically sealed system volume and cannot be safely deleted — full stop. That's a macOS security feature (introduced to harden the OS against tampering), not a limitation of this script, and this script will never ask you to disable System Integrity Protection to work around it. Removed apps are moved to the Trash, not permanently deleted, so you can put them back before emptying it — and they're all free to redownload from the App Store regardless.
-- **Software Update tweaks only touch the nagging/timing**, not critical security patches (XProtect/Gatekeeper data updates are left on). This mirrors the spirit of the original tool, which also never touches Windows Defender.
-- **Apple Intelligence's toggle is marked experimental.** Unlike everything else in this script, there's no Apple-documented Terminal command for it — the one that exists is a reverse-engineered preference key that has changed across macOS point updates in the past. The reliable path is always System Settings → Apple Intelligence & Siri.
-- **Window tiling** (Sequoia's drag-to-edge snapping) doesn't have a publicly confirmed `defaults` key either, so the script opens System Settings to the right pane instead of guessing at a command that might silently do nothing.
-
-## Reverting changes
-
-Every change is logged to `~/.macdebloat_backup/`. To undo the most recent run:
-
-```bash
-bash MacDebloat.sh --revert
-```
-
-Or point at a specific log:
-
-```bash
-bash MacDebloat.sh --revert ~/.macdebloat_backup/changes-20260911-141200.log
-```
+> Same rules as MacDebloat.sh: this changes real system settings and is provided as-is. It also pops native macOS admin-password dialogs for anything that needs elevated privileges — see **Privilege escalation** below before running it.
 
 ## Requirements
 
-- macOS Sonoma (14) or later recommended; most tweaks work on older versions too.
-- Apple Silicon for the Apple Intelligence toggle specifically (it isn't available on Intel Macs regardless of macOS version).
-- Admin (sudo) password for the handful of tweaks that change machine-wide settings — the script tells you which ones before it asks.
+- macOS (the API itself will start on any OS, but every tweak shells out to macOS-only commands like `defaults`, `pmset`, and `osascript`)
+- Python 3.10+
 
-## What this script will never do
+## Running it
 
-Same philosophy as the original: no telemetry of its own, no bundled installers, and nothing that weakens your Mac's actual security. Specifically, it will never touch System Integrity Protection, the sealed system volume, Gatekeeper, or FileVault.
+```bash
+cd deblaot
+./run.sh
+```
 
-## Credits
+First run creates a local virtualenv and installs dependencies; after that it just starts the server:
 
-Concept and menu-driven feel inspired by [Win11Debloat](https://github.com/Raphire/Win11Debloat) by Raphire. No code is shared between the two projects — Windows and macOS are configured through entirely different mechanisms (registry/Group Policy vs. `defaults`/`launchctl`).
+```
+Starting deblaot on http://127.0.0.1:8765
+Interactive API docs: http://127.0.0.1:8765/docs
+```
 
-## License
+Open `http://127.0.0.1:8765/docs` for a live, click-to-try API explorer (auto-generated by FastAPI from the code, so it's always in sync).
 
-MIT — see [LICENSE](LICENSE).
+## Why a backend, and why FastAPI
+
+Splitting the "what changes to make" logic from "how the user picks them" makes sense once more than one interface wants to drive the same tweaks. FastAPI specifically because it's a thin layer over plain Python functions, gives you the interactive `/docs` explorer for free, and validates requests (bad `param` values, missing confirmation on experimental tweaks, etc.) before your code ever runs.
+
+## Privilege escalation
+
+A backend service isn't a Terminal session — there's no guarantee it's attached to a TTY that `sudo` could prompt on. So instead of `sudo`, admin-requiring commands go through:
+
+```applescript
+do shell script "<command>" with administrator privileges
+```
+
+via `osascript`, which pops the same native macOS password dialog every Mac user already recognizes. This is the appropriate pattern for something a GUI will eventually sit in front of. It also means **this process should never itself be run as root** — it asks for elevation exactly when a specific command needs it, the same way `MacDebloat.sh` does with inline `sudo`.
+
+## Security note
+
+This API has no authentication of its own and isn't meant to need any, because it isn't meant to be reachable from anywhere but the machine it's running on:
+
+- `run.sh` binds to `127.0.0.1` only.
+- It can change system settings and trigger admin prompts.
+
+Do not put this behind a public port, a reverse proxy, or `0.0.0.0` without adding real authentication first.
+
+## API overview
+
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/health` | Basic liveness + whether this is actually running on macOS |
+| GET | `/system` | macOS version, build, architecture, hostname |
+| GET | `/categories` | The 8 tweak categories and how many tweaks each has |
+| GET | `/tweaks?category=` | List tweaks, optionally filtered by category |
+| GET | `/presets` | The `recommended` and `all` preset tweak-ID lists |
+| POST | `/tweaks/{id}/apply` | Apply one tweak. Body: `{"param": "...", "confirm_experimental": false}` |
+| POST | `/categories/{id}/apply` | Apply every non-parameterized, non-experimental tweak in a category |
+| POST | `/presets/{id}/apply` | Apply a whole preset (`recommended` or `all`) |
+| GET | `/history/runs` | Recent runs, each with an action count and revert status |
+| GET | `/history/runs/{run_id}` | Every individual change made in one run |
+| POST | `/history/revert` | Revert a run. Body: `{"run_id": "..."}` (omit for the most recent run) |
+
+Tweaks that take a parameter (`dock-position`: `bottom`/`left`/`right`; `finder-default-location`: `home`/`desktop`/`documents`) return `400` if you don't pass a valid `param`. The one experimental tweak (`disable-apple-intelligence`) returns `400` unless you pass `confirm_experimental: true`.
+
+## How revert works
+
+Every individual `defaults` write (or non-defaults action, like a `pmset` change) is logged to a small SQLite database at `~/.deblaot/history.sqlite3` *before* it's applied — domain, key, and whatever value was there beforehand (or a note that the key didn't exist, so revert means delete). Writes are grouped under a `run_id`, so reverting one tweak, one whole category run, or a whole preset run all work the same way: walk that run's actions newest-first and put each one back.
+
+This is a step up from `MacDebloat.sh`'s plain text log — structured rows in a real database instead of generated shell commands — but it's solving the exact same problem the same way conceptually: nothing is changed without first recording how to undo it.
+
+## Project layout
+
+```
+deblaot/
+  app/
+    main.py       # FastAPI app + routes
+    tweaks.py      # the 30-tweak catalog, ported from MacDebloat.sh
+    engine.py     # defaults/pmset execution, privilege escalation, revert logic
+    history.py    # SQLite-backed run/action history
+    system.py     # macOS version/arch detection
+  requirements.txt
+  run.sh
+```
