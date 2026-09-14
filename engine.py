@@ -110,12 +110,21 @@ def defaults_write(
     run_id: Optional[str] = None,
     tweak_id: str = "",
 ) -> tuple[bool, str]:
-    """Write a defaults key, recording whatever is needed to undo just this
-    one write before making it."""
+    """Write a defaults key. The prior value is read up front (it has to be,
+    since the write is about to overwrite it), but the history row is only
+    recorded once the write actually succeeds -- a failed write changed
+    nothing, so it should leave nothing to revert."""
+    prior = None
+    prior_type = None
     if run_id:
         prior = defaults_read(domain, key, admin)
         if prior is not None:
             prior_type = type_flag_for(domain, key, admin)
+
+    result = _run(["defaults", "write", domain, key, type_flag, value], admin)
+
+    if run_id and result.ok:
+        if prior is not None:
             history.record(
                 run_id, tweak_id, "defaults_write",
                 domain=domain, key=key, prior_value=prior, prior_type=prior_type,
@@ -126,7 +135,7 @@ def defaults_write(
                 run_id, tweak_id, "defaults_delete",
                 domain=domain, key=key, requires_admin=admin,
             )
-    result = _run(["defaults", "write", domain, key, type_flag, value], admin)
+
     return result.ok, (result.output or "applied")
 
 

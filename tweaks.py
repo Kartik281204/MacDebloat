@@ -188,12 +188,12 @@ def _pmset_get(key: str) -> Optional[str]:
 
 def _apply_disable_powernap(run_id: str, param=None):
     cur = _pmset_get("powernap") or "1"
+    result = engine.run_privileged(["pmset", "-a", "powernap", "0"])
+    if not result.ok:
+        return False, f"Failed: {result.output}"
     history.record(run_id, "disable-powernap", "shell", requires_admin=True,
                     revert_shell_cmd=f"pmset -a powernap {cur}")
-    result = engine.run_privileged(["pmset", "-a", "powernap", "0"])
-    if result.ok:
-        return True, "Power Nap disabled during sleep"
-    return False, f"Failed: {result.output}"
+    return True, "Power Nap disabled during sleep"
 
 
 register(Tweak(
@@ -205,12 +205,12 @@ register(Tweak(
 
 def _apply_disable_wake_network(run_id: str, param=None):
     cur = _pmset_get("womp") or "1"
+    result = engine.run_privileged(["pmset", "-a", "womp", "0"])
+    if not result.ok:
+        return False, f"Failed: {result.output}"
     history.record(run_id, "disable-wake-network", "shell", requires_admin=True,
                     revert_shell_cmd=f"pmset -a womp {cur}")
-    result = engine.run_privileged(["pmset", "-a", "womp", "0"])
-    if result.ok:
-        return True, "'Wake for network access' disabled during sleep"
-    return False, f"Failed: {result.output}"
+    return True, "'Wake for network access' disabled during sleep"
 
 
 register(Tweak(
@@ -230,16 +230,18 @@ simple_defaults(
 # ---------------------------------------------------------------------------
 
 def _apply_disable_update_autocheck(run_id: str, param=None):
+    r1 = engine.run_privileged(["softwareupdate", "--schedule", "off"])
+    if not r1.ok:
+        return False, f"Failed: {r1.output}"
     history.record(run_id, "disable-update-autocheck", "shell", requires_admin=True,
                     revert_shell_cmd="softwareupdate --schedule on")
-    r1 = engine.run_privileged(["softwareupdate", "--schedule", "off"])
     ok2, msg2 = engine.defaults_write(
         "/Library/Preferences/com.apple.SoftwareUpdate", "AutomaticCheckEnabled",
         "-bool", "false", admin=True, run_id=run_id, tweak_id="disable-update-autocheck",
     )
-    if r1.ok and ok2:
+    if ok2:
         return True, "Automatic update checks disabled (critical security updates are untouched)"
-    return False, f"Failed: {r1.output if not r1.ok else msg2}"
+    return False, f"Failed: {msg2}"
 
 
 register(Tweak(
