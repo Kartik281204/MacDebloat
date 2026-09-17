@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="deblaot">
+<meta name="theme-color" content="#F5F5F7">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>deblaot</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ---------- Token entry screen ---------- -->
+  <div id="screen-token" class="screen" hidden>
+    <div class="token-card">
+      <h1 class="token-title">deblaot</h1>
+      <p class="token-copy">
+        This Mac's deblaot backend is protected with an access token.
+        Find it in the terminal where you ran <code>run.sh</code>.
+      </p>
+      <input id="token-input" class="token-input" type="text" inputmode="text"
+             autocapitalize="off" autocorrect="off" spellcheck="false"
+             placeholder="Paste access token">
+      <button id="token-submit" class="btn btn-primary btn-block">Connect</button>
+      <p id="token-error" class="token-error" hidden></p>
+    </div>
+  </div>
+
+  <!-- ---------- Main app shell ---------- -->
+  <div id="screen-main" class="screen" hidden>
+
+    <header class="nav-bar" id="nav-bar">
+      <button id="nav-back" class="nav-back" hidden>
+        <svg viewBox="0 0 12 20" class="chevron"><path d="M10 2 L2 10 L10 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="nav-back-label">Back</span>
+      </button>
+      <h1 id="nav-title" class="nav-title">deblaot</h1>
+      <div class="nav-spacer"></div>
+    </header>
+
+    <main id="content-area" class="content-area"></main>
+
+    <nav class="tab-bar">
+      <button class="tab-btn" data-tab="tweaks">
+        <svg viewBox="0 0 24 24" class="tab-icon"><path d="M4 6h16M4 12h10M4 18h13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Tweaks</span>
+      </button>
+      <button class="tab-btn" data-tab="presets">
+        <svg viewBox="0 0 24 24" class="tab-icon"><path d="M12 3 L14.5 9.5 L21 10.5 L16.2 15 L17.5 21.5 L12 18.2 L6.5 21.5 L7.8 15 L3 10.5 L9.5 9.5 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Presets</span>
+      </button>
+      <button class="tab-btn" data-tab="history">
+        <svg viewBox="0 0 24 24" class="tab-icon"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5 V12 L15.2 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>History</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ---------- Action sheet (confirmations) ---------- -->
+  <div id="action-sheet-overlay" class="overlay" hidden>
+    <div class="action-sheet" id="action-sheet">
+      <div class="action-sheet-body">
+        <p class="action-sheet-title" id="sheet-title"></p>
+        <p class="action-sheet-message" id="sheet-message"></p>
+      </div>
+      <button class="sheet-btn sheet-btn-confirm" id="sheet-confirm">Continue</button>
+      <button class="sheet-btn sheet-btn-cancel" id="sheet-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ---------- Toast ---------- -->
+  <div id="toast" class="toast" hidden></div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
