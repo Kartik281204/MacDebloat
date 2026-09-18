@@ -31,6 +31,7 @@ Every interface here shares the same catalog and the same values: nothing touche
 - [Quick start](#quick-start)
 - [Four ways in](#four-ways-in)
 - [Features](#features)
+- [How much does this actually free up?](#how-much-does-this-actually-free-up)
 - [Design principles](#design-principles)
 - [Why this isn't a 1:1 port](#why-this-isnt-a-11-port)
 - [Project structure](#project-structure)
@@ -102,6 +103,22 @@ All four read from the same 30-tweak catalog. None of them re-implement the unde
 | **Remove Bundled Apps** | Pages, Numbers, Keynote, iMovie, GarageBand — the only five Apple apps Apple itself allows you to delete. |
 
 Run `bash MacDebloat.sh --list`, or `GET /tweaks` on the API, for the exact, current list at any time — both read from the same source of truth.
+
+## How much does this actually free up?
+
+Two honest answers instead of one polished-looking one:
+
+<p align="center">
+  <img src="Assets/Images/disk-space-chart.png" width="480" alt="Bar chart: disk space reclaimed by removing Pages, Numbers, Keynote, iMovie, and GarageBand">
+</p>
+
+**Disk space** comes almost entirely from **Remove Bundled Apps** — everything else in this project is a privacy, appearance, or system-behavior change with no disk footprint either way. Pages, Numbers, and Keynote are roughly 0.6 GB each; iMovie is about 3.3 GB; GarageBand ranges from ~1.5 GB up to 10+ GB depending on how much of its optional sound library you've downloaded. These are approximate, current-as-of-early-2026 figures from Mac App Store listings, not a lab-measured before/after of the whole tool — your actual numbers will vary by macOS version and what you've already deleted.
+
+<p align="center">
+  <img src="Assets/Images/tweak-breakdown-chart.png" width="480" alt="Bar chart: the 30 tweaks by category, with Remove Bundled Apps highlighted as the only one that frees disk space">
+</p>
+
+**Memory** doesn't get a chart, on purpose. None of the 30 tweaks meaningfully free up RAM — disabling Siri or analytics reporting might shave a background process here or there, but not by an amount worth measuring or claiming. Making up a number for a graph would be exactly the kind of faked parity this project tries to avoid elsewhere (see [Why this isn't a 1:1 port](#why-this-isnt-a-11-port)). If that changes — a future tweak with a real, measurable memory footprint — it'll get charted the same sourced way as the disk-space numbers above, not before.
 
 ## Design principles
 
